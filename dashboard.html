@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Movtech Dashboard</title>
+
+  <!-- ICONS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+
+    body{
+      margin:0;
+      font-family: Arial;
+      background:#f4f6fb;
+      display:flex;
+    }
+
+    /* SIDEBAR */
+    .sidebar{
+      width:250px;
+      background:#0d1b2a;
+      color:white;
+      height:100vh;
+      padding:20px;
+      position:fixed;
+      transition:0.3s;
+    }
+
+    .logo{
+      font-size:20px;
+      font-weight:bold;
+      margin-bottom:30px;
+      color:#00d4ff;
+    }
+
+    .nav-item{
+      padding:12px;
+      margin:8px 0;
+      cursor:pointer;
+      border-radius:8px;
+      transition:0.3s;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .nav-item:hover{
+      background:#1b263b;
+      transform:translateX(5px);
+    }
+
+    .active{
+      background:#00d4ff;
+      color:#0d1b2a;
+      font-weight:bold;
+    }
+
+    /* MAIN AREA */
+    .main{
+      margin-left:270px;
+      padding:20px;
+      width:100%;
+      animation:fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn{
+      from{opacity:0; transform:translateY(10px);}
+      to{opacity:1; transform:translateY(0);}
+    }
+
+    /* TOP BAR */
+    .topbar{
+      background:white;
+      padding:15px;
+      border-radius:12px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom:20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    /* CONTENT BOX */
+    .card{
+      background:white;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.05);
+      animation:fadeIn 0.4s ease-in-out;
+    }
+
+    .title{
+      font-size:18px;
+      font-weight:bold;
+    }
+
+  </style>
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<body>
+
+<!-- SIDEBAR -->
+ 
+<div class="sidebar">
+
+  <div class="logo">Movtech Admin</div>
+
+  <div class="nav-item active" onclick="loadSection('dashboard')">
+    <i class="fa fa-home"></i> Dashboard
+  </div>
+
+  <div class="nav-item" onclick="loadSection('invoices')">
+    <i class="fa fa-file-invoice"></i> Invoices
+  </div>
+
+  <div class="nav-item" onclick="loadSection('bookings')">
+    <i class="fa fa-calendar"></i> Bookings
+  </div>
+
+  <div class="nav-item" onclick="loadSection('projects')">
+    <i class="fa fa-diagram-project"></i> Projects
+  </div>
+
+  <div class="nav-item" onclick="loadSection('pricing')">
+    <i class="fa fa-tags"></i> Pricing
+  </div>
+
+  <div class="nav-item" onclick="loadSection('settings')">
+    <i class="fa fa-gear"></i> Settings
+  </div>
+
+</div>
+
+
+<!-- MAIN -->
+<div class="main">
+
+  <div class="topbar">
+    <div id="pageTitle">Dashboard</div>
+    <div>Movtech Creations</div>
+  </div>
+
+  <div id="content" class="card">
+    Welcome to Movtech Dashboard 🚀
+  </div>
+
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbw8my5MQMlUnNI_Emw-E_fXdH2R4_Imcn2Di3NEC6dZLV2yAuVfVvd2RI3liHDKeiVX/exec";
+function loadSection(section){
+async function fetchInvoices(){
+
+  const container = document.getElementById("invoiceList");
+
+  try{
+
+    const response = await fetch(API_URL);
+    const data = await response.json();
+
+    let output = "";
+
+    data.reverse().forEach(inv => {
+
+      const whatsappMessage =
+`Hello ${inv.clientName},
+
+Invoice ID: ${inv.invoiceId}
+Service: ${inv.service}
+Amount: MWK ${inv.amount}
+Due Date: ${inv.dueDate}
+
+Thank you for choosing Movtech Creations.`;
+
+      const whatsappLink =
+`https://wa.me/${inv.phone}?text=${encodeURIComponent(whatsappMessage)}`;
+
+      output += `
+        <div style="
+          background:white;
+          padding:15px;
+          margin:10px 0;
+          border-radius:10px;
+          box-shadow:0 2px 8px rgba(0,0,0,0.05);
+        ">
+
+          <h3>${inv.clientName}</h3>
+          <p><b>Service:</b> ${inv.service}</p>
+          <p><b>Amount:</b> MWK ${inv.amount}</p>
+          <p><b>Status:</b> ${inv.status}</p>
+
+          <button onclick='sendWhatsApp(${JSON.stringify(inv)})'
+            style="background:#25D366;color:white;padding:8px;border:none;border-radius:5px;cursor:pointer;">
+            Send WhatsApp + PDF
+          </button>
+
+        </div>
+      `;
+    });
+
+    container.innerHTML = output;
+
+  } catch(error){
+
+    container.innerHTML = "<p style='color:red'>Failed to load invoices</p>";
+    console.log(error);
+
+  }
+}
+  // reset active
+  document.querySelectorAll('.nav-item')
+    .forEach(el => el.classList.remove('active'));
+
+  event.target.classList.add('active');
+
+  const content = document.getElementById("content");
+  const title = document.getElementById("pageTitle");
+
+  title.innerText = section.charAt(0).toUpperCase() + section.slice(1);
+
+  content.innerHTML = "<div style='padding:20px'>Loading...</div>";
+
+  setTimeout(() => {
+
+    if(section === "dashboard"){
+      content.innerHTML = `
+        <h2>Overview</h2>
+        <p>Welcome back to Movtech Admin Panel.</p>
+      `;
+    }
+
+if(section === "invoices"){
+
+  content.innerHTML = `
+    <h2>Invoices</h2>
+    <div id="invoiceList">Loading invoices...</div>
+  `;
+
+  fetchInvoices();
+}
+
+    if(section === "bookings"){
+      content.innerHTML = `
+        <h2>Bookings</h2>
+        <p>Photography & service bookings will appear here.</p>
+      `;
+    }
+
+    if(section === "projects"){
+      content.innerHTML = `
+        <h2>Projects</h2>
+        <p>Client projects tracking system.</p>
+      `;
+    }
+
+if(section === "pricing"){
+
+  content.innerHTML = `
+    <h2>Pricing Management</h2>
+
+    <!-- ADD FORM -->
+    <div style="
+      background:white;
+      padding:15px;
+      border-radius:10px;
+      margin-bottom:15px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    ">
+
+      <h3>Add New Service</h3>
+
+      <input id="service" placeholder="Service name"
+        style="width:100%;padding:10px;margin:5px 0;">
+
+      <input id="price" placeholder="Price"
+        style="width:100%;padding:10px;margin:5px 0;">
+
+      <input id="description" placeholder="Description"
+        style="width:100%;padding:10px;margin:5px 0;">
+
+      <button onclick="addService()"
+        style="background:#0d6efd;color:white;padding:10px;border:none;border-radius:5px;">
+        Add Service
+      </button>
+
+    </div>
+
+    <!-- LIST -->
+    <div id="pricingList">Loading pricing...</div>
+  `;
+
+  loadPricing();
+}
+
+    if(section === "settings"){
+      content.innerHTML = `
+        <h2>Settings</h2>
+        <p>System configuration and admin settings.</p>
+      `;
+    }
+
+  }, 400);
+
+}
+function sendWhatsApp(inv){
+
+  const { jsPDF } = window.jspdf;
+
+  const doc = new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text("MOVTECH INVOICE", 20, 20);
+
+  doc.setFontSize(12);
+  doc.text("Invoice ID: " + inv.invoiceId, 20, 40);
+  doc.text("Client: " + inv.clientName, 20, 50);
+  doc.text("Service: " + inv.service, 20, 60);
+  doc.text("Amount: MWK " + inv.amount, 20, 70);
+  doc.text("Due Date: " + inv.dueDate, 20, 80);
+
+  doc.save(inv.invoiceId + ".pdf");
+
+  const message = `
+Hello ${inv.clientName},
+
+Your invoice is ready.
+
+Invoice ID: ${inv.invoiceId}
+Service: ${inv.service}
+Amount: MWK ${inv.amount}
+Due Date: ${inv.dueDate}
+
+Please check your PDF invoice.
+
+Thank you 🙏
+`;
+
+  const link =
+`https://wa.me/${inv.phone}?text=${encodeURIComponent(message)}`;
+
+  window.open(link, "_blank");
+}
+async function loadPricing(){
+
+  const container = document.getElementById("pricingList");
+
+  try{
+
+    const response = await fetch(API_URL + "?type=pricing");
+    const data = await response.json();
+
+    let output = "";
+
+    data.forEach(item => {
+
+      output += `
+        <div style="
+          background:white;
+          padding:15px;
+          margin:10px 0;
+          border-radius:10px;
+          box-shadow:0 2px 8px rgba(0,0,0,0.05);
+        ">
+
+          <h3>${item.service}</h3>
+          <p><b>Price:</b> MWK ${item.price}</p>
+          <p>${item.description}</p>
+
+          <button onclick='sendPrice("${item.service}", "${item.price}")'
+            style="background:#25D366;color:white;padding:8px;border:none;border-radius:5px;">
+            Send Price
+          </button>
+
+        </div>
+      `;
+    });
+
+    container.innerHTML = output;
+
+  } catch(err){
+    container.innerHTML = "<p style='color:red'>Failed to load pricing</p>";
+  }
+}
+function sendPrice(service, price){
+
+  const message = `
+Hello 👋
+
+Service: ${service}
+Price: MWK ${price}
+
+Let me know if you want to proceed.
+
+Movtech Creations
+`;
+
+  const phone = "265990479004";
+
+  const link =
+`https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+  window.open(link, "_blank");
+}
+async function addService(){
+
+  const service = document.getElementById("service").value;
+  const price = document.getElementById("price").value;
+  const description = document.getElementById("description").value;
+
+  try {
+
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        service,
+        price,
+        description
+      })
+    });
+
+    const result = await response.json();
+
+    console.log(result);
+
+    if(result.success){
+      alert("Service added successfully");
+      loadPricing();
+    } else {
+      alert("Server error: " + result.error);
+    }
+
+  } catch(error){
+    console.log("FETCH ERROR:", error);
+    alert("Cannot connect to server. Check deployment.");
+  }
+}
+</script>
+
+</body>
+</html>
